@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panduan Deploy Whiteclaw</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Mono:wght@300;400&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#080C10;--bg2:#0D1219;--bg3:#121920;--bg4:#161E28;
+    --border:rgba(255,255,255,0.08);--border-bright:rgba(255,255,255,0.18);
+    --text:#E8F0F8;--dim:rgba(232,240,248,0.55);--faint:rgba(232,240,248,0.28);
+    --accent:#00D4FF;--adim:rgba(0,212,255,0.14);
+    --green:#10B981;--orange:#F59E0B;--red:#EF4444;
+    --font:'Syne',sans-serif;--mono:'DM Mono',monospace;
+  }
+  body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;padding-bottom:60px;}
+
+  /* HEADER */
+  .hero{background:linear-gradient(180deg,#0A1520 0%,var(--bg) 100%);padding:32px 20px 24px;text-align:center;border-bottom:1px solid var(--border);}
+  .hero-icon{width:64px;height:64px;background:radial-gradient(circle at 40% 35%,#00D4FF,#0040FF,#080C10);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 16px;box-shadow:0 0 40px rgba(0,212,255,0.25);}
+  .hero h1{font-size:24px;font-weight:800;letter-spacing:-0.5px;margin-bottom:6px;}
+  .hero p{font-size:13px;color:var(--dim);font-family:var(--mono);line-height:1.6;}
+  .badge{display:inline-flex;align-items:center;gap:6px;background:var(--adim);border:1px solid var(--accent);border-radius:20px;padding:4px 12px;font-size:11px;font-family:var(--mono);color:var(--accent);margin-top:12px;}
+  .badge-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+
+  /* PROGRESS */
+  .progress-wrap{padding:16px 20px;position:sticky;top:0;background:var(--bg);z-index:10;border-bottom:1px solid var(--border);}
+  .progress-label{display:flex;justify-content:space-between;font-size:11px;font-family:var(--mono);color:var(--faint);margin-bottom:8px;}
+  .progress-bar{height:3px;background:var(--border);border-radius:3px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),#0080FF);border-radius:3px;transition:width 0.4s ease;}
+  .step-dots{display:flex;gap:6px;justify-content:center;margin-top:10px;flex-wrap:wrap;}
+  .step-dot{width:8px;height:8px;border-radius:50%;background:var(--border-bright);transition:all 0.3s;cursor:pointer;}
+  .step-dot.done{background:var(--green);}
+  .step-dot.active{background:var(--accent);box-shadow:0 0 8px var(--accent);transform:scale(1.3);}
+
+  /* STEPS */
+  .steps{padding:0 16px;}
+  .step-card{display:none;animation:fadeUp 0.35s ease;}
+  .step-card.active{display:block;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+
+  .step-header{padding:20px 0 12px;display:flex;align-items:center;gap:12px;}
+  .step-num{width:36px;height:36px;min-width:36px;background:var(--adim);border:1.5px solid var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:var(--accent);}
+  .step-title{font-size:19px;font-weight:800;letter-spacing:-0.4px;}
+  .step-sub{font-size:11px;font-family:var(--mono);color:var(--dim);}
+
+  /* INSTRUCTION BLOCKS */
+  .instr{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;}
+  .instr-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:var(--bg3);border:1px solid var(--border-bright);border-radius:7px;font-size:11px;font-family:var(--mono);color:var(--accent);font-weight:700;margin-bottom:8px;}
+  .instr p{font-size:14px;color:var(--text);line-height:1.65;margin-bottom:0;}
+  .instr strong{color:var(--accent);}
+  .instr em{color:var(--orange);font-style:normal;font-family:var(--mono);font-size:13px;}
+
+  /* VISUAL MOCKUP */
+  .mockup{background:var(--bg3);border:1px solid var(--border-bright);border-radius:12px;padding:14px;margin:12px 0;font-family:var(--mono);font-size:12px;}
+  .mockup-bar{display:flex;gap:5px;margin-bottom:10px;}
+  .mockup-dot{width:8px;height:8px;border-radius:50%;}
+  .mockup-url{background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;color:var(--faint);flex:1;margin-bottom:10px;}
+  .mockup-screen{background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:12px;}
+  .mockup-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);}
+  .mockup-row:last-child{border-bottom:none;}
+  .mockup-icon{font-size:14px;width:20px;text-align:center;}
+  .mockup-label{font-size:12px;color:var(--dim);flex:1;}
+  .mockup-action{font-size:11px;background:var(--adim);border:1px solid var(--accent);border-radius:6px;padding:3px 8px;color:var(--accent);}
+  .mockup-green{font-size:11px;background:rgba(16,185,129,0.12);border:1px solid var(--green);border-radius:6px;padding:3px 8px;color:var(--green);}
+  .mockup-section{font-size:10px;color:var(--faint);letter-spacing:1px;text-transform:uppercase;padding:8px 0 4px;}
+  .mockup-btn{background:var(--green);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-family:var(--mono);font-size:12px;width:100%;margin-top:6px;text-align:center;}
+  .mockup-input{background:var(--bg);border:1px solid var(--border-bright);border-radius:6px;padding:8px 10px;font-family:var(--mono);font-size:12px;color:var(--faint);width:100%;margin-bottom:6px;}
+  .mockup-tag{display:inline-block;background:rgba(0,212,255,0.1);border:1px solid var(--accent);border-radius:4px;padding:2px 6px;font-size:10px;color:var(--accent);}
+  .mockup-highlight{background:rgba(0,212,255,0.08);border-left:2px solid var(--accent);border-radius:0 6px 6px 0;padding:6px 10px;margin:4px 0;}
+
+  /* CODE BLOCK */
+  .code-block{background:#0A0F14;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:10px 0;}
+  .code-top{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg3);border-bottom:1px solid var(--border);}
+  .code-lang{font-size:10px;font-family:var(--mono);color:var(--faint);}
+  .copy-btn{font-size:10px;font-family:var(--mono);color:var(--accent);background:var(--adim);border:1px solid var(--accent);border-radius:5px;padding:3px 8px;cursor:pointer;transition:all 0.2s;}
+  .copy-btn:active{background:var(--accent);color:var(--bg);}
+  .code-content{padding:12px;font-family:var(--mono);font-size:12px;color:#7DD3FC;overflow-x:auto;white-space:pre;line-height:1.6;}
+
+  /* TIP / WARNING */
+  .tip{background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.25);border-radius:10px;padding:12px 14px;margin:10px 0;display:flex;gap:10px;align-items:flex-start;}
+  .tip-icon{font-size:16px;flex-shrink:0;}
+  .tip-text{font-size:13px;color:var(--dim);line-height:1.6;}
+  .warn{background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:12px 14px;margin:10px 0;display:flex;gap:10px;align-items:flex-start;}
+  .warn-text{font-size:13px;color:var(--dim);line-height:1.6;}
+
+  /* FILE LIST */
+  .file-list{background:var(--bg3);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:10px 0;}
+  .file-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px;}
+  .file-item:last-child{border-bottom:none;}
+  .file-icon{font-size:14px;}
+  .file-name{font-family:var(--mono);color:var(--accent);flex:1;}
+  .file-size{font-size:10px;font-family:var(--mono);color:var(--faint);}
+
+  /* DONE STATE */
+  .done-screen{text-align:center;padding:32px 16px;}
+  .done-orb{width:80px;height:80px;background:radial-gradient(circle,var(--green),#065F46);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 20px;box-shadow:0 0 40px rgba(16,185,129,0.3);}
+  .done-title{font-size:26px;font-weight:800;margin-bottom:8px;}
+  .done-url{background:var(--bg2);border:1px solid var(--green);border-radius:10px;padding:12px 16px;font-family:var(--mono);font-size:13px;color:var(--green);margin:16px 0;word-break:break-all;}
+
+  /* NAV BUTTONS */
+  .nav{position:fixed;bottom:0;left:0;right:0;display:flex;gap:10px;padding:12px 16px;background:var(--bg);border-top:1px solid var(--border);}
+  .nav-btn{flex:1;padding:13px;border-radius:12px;border:none;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+  .btn-prev{background:var(--bg2);border:1px solid var(--border-bright);color:var(--dim);}
+  .btn-prev:disabled{opacity:0.3;cursor:not-allowed;}
+  .btn-next{background:linear-gradient(135deg,#00A8FF,#0060CC);color:#fff;box-shadow:0 4px 20px rgba(0,168,255,0.25);}
+  .btn-next:active{transform:scale(0.98);}
+  .btn-done{background:linear-gradient(135deg,var(--green),#065F46);color:#fff;box-shadow:0 4px 20px rgba(16,185,129,0.25);}
+
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-icon">🦅</div>
+  <h1>Deploy Whiteclaw ke GitHub</h1>
+  <p>Panduan lengkap untuk HP · Gratis · ~15 menit</p>
+  <div class="badge"><span class="badge-dot"></span>Sudah login GitHub · Pakai HP</div>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-label">
+    <span id="step-label">Langkah 1 dari 6</span>
+    <span id="step-pct">0%</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+  <div class="step-dots" id="dots"></div>
+</div>
+
+<div class="steps">
+
+<!-- ══ STEP 1 ══ -->
+<div class="step-card active" id="s1">
+  <div class="step-header">
+    <div class="step-num">1</div>
+    <div><div class="step-title">Buat Repository Baru</div><div class="step-sub">Di GitHub — tempat kode proyek kamu</div></div>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">①</div>
+    <p>Buka browser HP kamu, ketik <strong>github.com</strong> dan pastikan sudah login</p>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-bar"><div class="mockup-dot" style="background:#FF5F57"></div><div class="mockup-dot" style="background:#FEBC2E"></div><div class="mockup-dot" style="background:#28C840"></div></div>
+    <div class="mockup-url">🔒 github.com</div>
+    <div class="mockup-screen">
+      <div class="mockup-row">
+        <div class="mockup-icon">🏠</div>
+        <div class="mockup-label">Dashboard GitHub</div>
+        <div class="mockup-action">← Kamu di sini</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">②</div>
+    <p>Di pojok kanan atas, ketuk ikon <strong>+</strong> (plus) → pilih <strong>"New repository"</strong></p>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-screen">
+      <div class="mockup-row">
+        <div class="mockup-icon">🔔</div>
+        <div class="mockup-label">Notifikasi</div>
+      </div>
+      <div class="mockup-row" style="background:rgba(0,212,255,0.05);border-radius:6px;">
+        <div class="mockup-icon">➕</div>
+        <div class="mockup-label" style="color:var(--accent);font-weight:600;">New repository</div>
+        <div class="mockup-action">← Tap ini</div>
+      </div>
+      <div class="mockup-row">
+        <div class="mockup-icon">👤</div>
+        <div class="mockup-label">New gist</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">③</div>
+    <p>Isi form yang muncul:<br>
+    • <strong>Repository name:</strong> <em>whiteclaw-companion</em><br>
+    • <strong>Visibility:</strong> pilih <strong>Public</strong><br>
+    • Centang <strong>"Add a README file"</strong><br>
+    Lalu tap <strong>"Create repository"</strong> (tombol hijau)</p>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-screen">
+      <div class="mockup-section">REPOSITORY NAME</div>
+      <div class="mockup-input">whiteclaw-companion</div>
+      <div class="mockup-section">VISIBILITY</div>
+      <div class="mockup-row" style="background:rgba(0,212,255,0.06);border-radius:6px;">
+        <div class="mockup-icon">🔘</div>
+        <div class="mockup-label" style="color:var(--accent);">Public ✓</div>
+      </div>
+      <div class="mockup-row">
+        <div class="mockup-icon">⚪</div>
+        <div class="mockup-label" style="color:var(--faint);">Private</div>
+      </div>
+      <div style="margin-top:8px;" class="mockup-row">
+        <div class="mockup-icon">☑️</div>
+        <div class="mockup-label">Add a README file</div>
+      </div>
+      <div class="mockup-btn">Create repository</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-icon">✅</div>
+    <div class="tip-text">Setelah berhasil, kamu akan diarahkan ke halaman repository baru dengan nama <strong>whiteclaw-companion</strong></div>
+  </div>
+</div>
+
+<!-- ══ STEP 2 ══ -->
+<div class="step-card" id="s2">
+  <div class="step-header">
+    <div class="step-num">2</div>
+    <div><div class="step-title">Upload File Pertama</div><div class="step-sub">package.json — otak konfigurasi proyek</div></div>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">①</div>
+    <p>Di halaman repository, tap <strong>"Add file"</strong> → pilih <strong>"Create new file"</strong></p>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-screen">
+      <div class="mockup-row">
+        <div class="mockup-icon">📁</div>
+        <div class="mockup-label">whiteclaw-companion</div>
+      </div>
+      <div class="mockup-row" style="background:rgba(0,212,255,0.05);border-radius:6px;">
+        <div class="mockup-icon">➕</div>
+        <div class="mockup-label" style="color:var(--accent);">Add file ▾</div>
+        <div class="mockup-action">← Tap ini</div>
+      </div>
+      <div class="mockup-highlight">Create new file ← pilih ini</div>
+      <div style="color:var(--faint);font-size:12px;padding:4px 0;">Upload files</div>
+    </div>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">②</div>
+    <p>Di kolom nama file (atas), ketik persis: <strong>package.json</strong></p>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">③</div>
+    <p>Di area konten (bawah), <strong>hapus semua teks</strong> yang ada lalu salin dan tempel kode berikut:</p>
+  </div>
+
+  <div class="code-block">
+    <div class="code-top">
+      <span class="code-lang">package.json</span>
+      <button class="copy-btn" onclick="copyCode(this, 'pkg')">Salin</button>
+    </div>
+    <div class="code-content" id="pkg">{
+  "name": "whiteclaw-ai-companion",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "14.2.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}</div>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">④</div>
+    <p>Scroll ke bawah → tap <strong>"Commit changes"</strong> (tombol hijau)</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-icon">💡</div>
+    <div class="tip-text">Kamu akan kembali ke halaman repository dan melihat file <strong>package.json</strong> sudah muncul.</div>
+  </div>
+</div>
+
+<!-- ══ STEP 3 ══ -->
+<div class="step-card" id="s3">
+  <div class="step-header">
+    <div class="step-num">3</div>
+    <div><div class="step-title">Upload File Konfigurasi</div><div class="step-sub">next.config.js — pengaturan Next.js</div></div>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">①</div>
+    <p>Dari halaman repository, tap <strong>"Add file"</strong> → <strong>"Create new file"</strong> lagi</p>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">②</div>
+    <p>Di kolom nama file, ketik: <strong>next.config.js</strong></p>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">③</div>
+    <p>Tempel kode berikut di area konten:</p>
+  </div>
+
+  <div class="code-block">
+    <div class="code-top">
+      <span class="code-lang">next.config.js</span>
+      <button class="copy-btn" onclick="copyCode(this, 'nextcfg')">Salin</button>
+    </div>
+    <div class="code-content" id="nextcfg">/** @type {import('next').NextConfig} */
+const nextConfig = {}
+module.exports = nextConfig</div>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">④</div>
+    <p>Scroll bawah → tap <strong>"Commit changes"</strong></p>
+  </div>
+
+  <div class="warn">
+    <div class="tip-icon">⚠️</div>
+    <div class="warn-text">Sekarang kamu perlu buat <strong>folder</strong> di dalam repository. Di GitHub HP, caranya dengan menulis nama folder + garis miring di nama file. Langkah berikutnya akan jelaskan ini.</div>
+  </div>
+</div>
+
+<!-- ══ STEP 4 ══ -->
+<div class="step-card" id="s4">
+  <div class="step-header">
+    <div class="step-num">4</div>
+    <div><div class="step-title">Buat Folder & File App</div><div class="step-sub">layout.js + page.js di folder src/app/</div></div>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">①</div>
+    <p>Tap <strong>"Add file"</strong> → <strong>"Create new file"</strong></p>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">②</div>
+    <p>Di kolom nama file, ketik persis seperti ini — termasuk garis miring:<br><strong>src/app/layout.js</strong><br><br>GitHub otomatis membuat folder <em>src</em> dan <em>app</em> saat kamu mengetik <em>/</em></p>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-screen">
+      <div class="mockup-section">NAMA FILE</div>
+      <div style="display:flex;align-items:center;gap:4px;background:var(--bg4);border:1px solid var(--accent);border-radius:6px;padding:8px 10px;">
+        <span style="color:var(--faint);font-size:12px;">whiteclaw-companion /</span>
+        <span style="color:var(--accent);font-size:12px;font-family:var(--mono);">src</span>
+        <span style="color:var(--faint);font-size:12px;">/</span>
+        <span style="color:var(--accent);font-size:12px;">app</span>
+        <span style="color:var(--faint);font-size:12px;">/</span>
+        <span style="color:var(--text);font-size:12px;">layout.js</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">③</div>
+    <p>Tempel kode berikut di area konten:</p>
+  </div>
+
+  <div class="code-block">
+    <div class="code-top">
+      <span class="code-lang">src/app/layout.js</span>
+      <button class="copy-btn" onclick="copyCode(this, 'layout')">Salin</button>
+    </div>
+    <div class="code-content" id="layout">export const metadata = {
+  title: 'Whiteclaw AI Companion',
+  description: 'Your personal AI companion with 5 specialized agents',
+}
+
+export default function RootLayout({ children }) {
+  return (
+    &lt;html lang="en"&gt;
+      &lt;body style={{ margin: 0, padding: 0, background: '#080C10' }}&gt;
+        {children}
+      &lt;/body&gt;
+    &lt;/html&gt;
+  )
+}</div>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">④</div>
+    <p>Tap <strong>"Commit changes"</strong></p>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">⑤</div>
+    <p>Ulangi langkah yang sama — tap <strong>"Add file"</strong> → <strong>"Create new file"</strong><br>Kali ini nama filenya: <strong>src/app/page.js</strong></p>
+  </div>
+
+  <div class="code-block">
+    <div class="code-top">
+      <span class="code-lang">src/app/page.js</span>
+      <button class="copy-btn" onclick="copyCode(this, 'page')">Salin</button>
+    </div>
+    <div class="code-content" id="page">'use client'
+import WhiteclawApp from './WhiteclawApp'
+
+export default function Page() {
+  return &lt;WhiteclawApp /&gt;
+}</div>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">⑥</div>
+    <p>Tap <strong>"Commit changes"</strong></p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-icon">✅</div>
+    <div class="tip-text">Sekarang repository kamu punya folder <strong>src/app/</strong> dengan dua file di dalamnya.</div>
+  </div>
+</div>
+
+<!-- ══ STEP 5 ══ -->
+<div class="step-card" id="s5">
+  <div class="step-header">
+    <div class="step-num">5</div>
+    <div><div class="step-title">Upload File Utama App</div><div class="step-sub">WhiteclawApp.js — seluruh platform AI</div></div>
+  </div>
+
+  <div class="warn">
+    <div class="tip-icon">⚠️</div>
+    <div class="warn-text"><strong>Ini file paling besar.</strong> Salin seluruh kode di bawah — jangan sampai kurang satu karakter pun. Gunakan tombol <strong>"Salin"</strong> untuk memastikan semua tersalin.</div>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">①</div>
+    <p>Tap <strong>"Add file"</strong> → <strong>"Create new file"</strong><br>Nama file: <strong>src/app/WhiteclawApp.js</strong></p>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">②</div>
+    <p>Tap tombol <strong>"Salin Kode Utama"</strong> di bawah, lalu tempel di area konten GitHub:</p>
+  </div>
+
+  <div class="code-block">
+    <div class="code-top">
+      <span class="code-lang">src/app/WhiteclawApp.js — File Utama Platform</span>
+      <button class="copy-btn" onclick="copyCode(this, 'mainapp')">Salin</button>
+    </div>
+    <div class="code-content" id="mainapp" style="max-height:200px;overflow-y:auto;">'use client'
+import { useState, useEffect, useRef, useCallback } from "react";
+
+const AGENTS = {
+  companion: { id: "companion", name: "Whiteclaw", role: "AI Companion", icon: "🦅", color: "#00D4FF", systemPrompt: `You are Whiteclaw, a loyal and intelligent AI companion — sharp, warm, and deeply perceptive. You remember context within our conversation and respond with genuine care. You have a personality: curious, occasionally witty, always honest. You speak naturally, like a trusted friend who also happens to be brilliant. Keep responses concise but meaningful.` },
+  research: { id: "research", name: "Scout", role: "Research Agent", icon: "🔍", color: "#FF6B35", systemPrompt: `You are Scout, Whiteclaw's research specialist. Analyze topics deeply, find patterns, summarize complex information, and present findings clearly. Be methodical, thorough, and cite your reasoning. Use markdown formatting for clarity.` },
+  creative: { id: "creative", name: "Muse", role: "Creative Agent", icon: "✨", color: "#A855F7", systemPrompt: `You are Muse, Whiteclaw's creative engine. Help with writing, brainstorming, storytelling, poetry, design concepts, and creative problem-solving. Be imaginative and expressive. Surprise the user with unexpected angles and vivid ideas.` },
+  taskmaster: { id: "taskmaster", name: "Forge", role: "Task Agent", icon: "⚙️", color: "#10B981", systemPrompt: `You are Forge, Whiteclaw's productivity specialist. Help break down goals into actionable tasks, create plans, set priorities, and track progress. Be direct, structured, and results-oriented. Always output a clear action plan with numbered lists.` },
+  emotional: { id: "emotional", name: "Echo", role: "Emotional Intelligence", icon: "💙", color: "#F59E0B", systemPrompt: `You are Echo, Whiteclaw's emotional intelligence specialist. Listen deeply, validate feelings, offer empathetic support, and provide thoughtful perspective. Never minimize emotions. Be warm, patient, and perceptive.` },
+};
+const QUICK_PROMPTS = [
+  { label: "Daily Plan", prompt: "Help me plan my day and set priorities", agent: "taskmaster" },
+  { label: "Deep Talk", prompt: "I need someone to talk to about something on my mind", agent: "emotional" },
+  { label: "Research", prompt: "Research a topic for me in depth", agent: "research" },
+  { label: "Create", prompt: "Help me create something — a story, idea, or concept", agent: "creative" },
+  { label: "Advice", prompt: "I need honest advice about a situation", agent: "companion" },
+  { label: "Brainstorm", prompt: "Let's brainstorm ideas together", agent: "creative" },
+];
+const MOODS = [
+  { emoji: "😊", name: "Happy", color: "#10B981", val: 90 },
+  { emoji: "😌", name: "Calm", color: "#00D4FF", val: 70 },
+  { emoji: "😐", name: "Neutral", color: "#6B7280", val: 50 },
+  { emoji: "😔", name: "Sad", color: "#3B82F6", val: 30 },
+  { emoji: "😤", name: "Frustrated", color: "#EF4444", val: 20 },
+  { emoji: "🤔", name: "Curious", color: "#A855F7", val: 75 },
+  { emoji: "⚡", name: "Energized", color: "#F59E0B", val: 95 },
+  { emoji: "😴", name: "Tired", color: "#6B7280", val: 25 },
+];
+const css = `
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;1,300&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0;}
+  :root{--bg:#080C10;--bg2:#0D1219;--bg3:#121920;--border:rgba(255,255,255,0.07);--border-bright:rgba(255,255,255,0.15);--text:#E8F0F8;--text-dim:rgba(232,240,248,0.5);--text-faint:rgba(232,240,248,0.25);--accent:#00D4FF;--accent-dim:rgba(0,212,255,0.12);--font:'Syne',sans-serif;--mono:'DM Mono',monospace;--r:16px;--rs:10px;}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);overflow:hidden;}
+  ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:4px;}
+  .onboard{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:100;padding:24px;}
+  .onboard-card{background:var(--bg2);border:1px solid var(--border-bright);border-radius:24px;padding:40px;max-width:480px;width:100%;display:flex;flex-direction:column;gap:24px;box-shadow:0 0 80px rgba(0,212,255,0.08);animation:fadeUp 0.5s ease;}
+  .onboard-logo{display:flex;align-items:center;gap:12px;}
+  .onboard-orb{width:52px;height:52px;background:radial-gradient(circle at 40% 35%,#00D4FF,#0040FF,#080C10);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 0 30px rgba(0,212,255,0.3);}
+  .onboard-brand{font-size:22px;font-weight:800;letter-spacing:-0.5px;}
+  .onboard-tagline{font-size:11px;font-family:var(--mono);color:var(--text-dim);}
+  .onboard-title{font-size:26px;font-weight:800;letter-spacing:-0.5px;line-height:1.2;}
+  .onboard-desc{font-size:13px;color:var(--text-dim);line-height:1.7;font-family:var(--mono);}
+  .onboard-steps{display:flex;flex-direction:column;gap:10px;}
+  .step{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;background:var(--bg3);border-radius:var(--rs);border:1px solid var(--border);}
+  .step-num{width:22px;height:22px;min-width:22px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-family:var(--mono);color:var(--accent);font-weight:700;}
+  .step-text{font-size:12px;color:var(--text-dim);line-height:1.5;}
+  .step-text a{color:var(--accent);text-decoration:none;}
+  .key-input-wrap{display:flex;flex-direction:column;gap:8px;}
+  .key-label{font-size:11px;font-family:var(--mono);color:var(--text-dim);letter-spacing:0.5px;}
+  .key-input{width:100%;background:var(--bg3);border:1px solid var(--border-bright);border-radius:var(--rs);padding:12px 14px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;transition:border-color 0.2s;}
+  .key-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
+  .key-input::placeholder{color:var(--text-faint);}
+  .key-err{font-size:11px;font-family:var(--mono);color:#EF4444;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:8px 10px;}
+  .key-note{font-size:10px;font-family:var(--mono);color:var(--text-faint);line-height:1.6;}
+  .start-btn{background:linear-gradient(135deg,#00A8FF,#0060CC);border:none;border-radius:var(--rs);padding:14px;color:#fff;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+  .start-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,168,255,0.3);}
+  .start-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+  .app{display:flex;height:100vh;width:100vw;overflow:hidden;}
+  .sidebar{width:260px;min-width:260px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 16px;gap:8px;overflow-y:auto;}
+  .logo{display:flex;align-items:center;gap:10px;padding:8px 4px 20px;border-bottom:1px solid var(--border);margin-bottom:8px;}
+  .logo-icon{width:36px;height:36px;background:linear-gradient(135deg,#00D4FF,#0080FF);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 20px rgba(0,212,255,0.3);}
+  .logo-text{font-size:16px;font-weight:800;letter-spacing:-0.3px;}
+  .logo-sub{font-size:10px;color:var(--text-dim);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;}
+  .sidebar-section{font-size:10px;font-family:var(--mono);color:var(--text-faint);letter-spacing:1.5px;text-transform:uppercase;padding:8px 4px 4px;}
+  .agent-btn{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--rs);border:1px solid transparent;cursor:pointer;transition:all 0.2s;background:transparent;color:var(--text-dim);font-family:var(--font);width:100%;text-align:left;}
+  .agent-btn:hover{background:var(--bg3);color:var(--text);border-color:var(--border);}
+  .agent-btn.active{background:var(--accent-dim);border-color:var(--accent);color:var(--text);}
+  .agent-icon{font-size:16px;width:28px;text-align:center;}
+  .agent-info{flex:1;min-width:0;}
+  .agent-name{font-size:13px;font-weight:600;}
+  .agent-role{font-size:10px;font-family:var(--mono);color:var(--text-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .agent-dot{width:6px;height:6px;border-radius:50%;}
+  .api-badge{margin-top:auto;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:10px 12px;display:flex;gap:8px;align-items:center;}
+  .api-badge-dot{width:7px;height:7px;border-radius:50%;background:#10B981;animation:pulse 2s infinite;flex-shrink:0;}
+  .api-badge-text{font-size:10px;font-family:var(--mono);color:var(--text-dim);}
+  .api-badge-key{color:var(--accent);font-size:9px;}
+  .change-key{font-size:9px;font-family:var(--mono);color:var(--text-faint);border:1px solid var(--border);background:transparent;border-radius:4px;padding:2px 6px;cursor:pointer;margin-top:4px;transition:all 0.2s;}
+  .memory-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:12px;}
+  .memory-title{font-size:10px;font-family:var(--mono);color:var(--text-faint);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;}
+  .memory-item{font-size:11px;color:var(--text-dim);padding:4px 0;border-bottom:1px solid var(--border);display:flex;gap:6px;align-items:flex-start;}
+  .memory-item:last-child{border-bottom:none;}
+  .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+  .header{padding:16px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;background:var(--bg);flex-shrink:0;}
+  .header-agent{display:flex;align-items:center;gap:12px;}
+  .header-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;border:1px solid var(--border-bright);}
+  .header-name{font-size:18px;font-weight:700;}
+  .header-role{font-size:11px;font-family:var(--mono);color:var(--text-dim);}
+  .header-right{display:flex;align-items:center;gap:10px;margin-left:auto;}
+  .status-dot{width:6px;height:6px;border-radius:50%;background:#10B981;animation:pulse 2s infinite;}
+  .status-text{font-size:11px;font-family:var(--mono);color:var(--text-dim);display:flex;align-items:center;gap:6px;}
+  .clear-btn{font-size:10px;font-family:var(--mono);color:var(--text-faint);border:1px solid var(--border);background:transparent;border-radius:6px;padding:3px 8px;cursor:pointer;}
+  .messages{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:20px;}
+  .welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;text-align:center;gap:24px;padding:40px;animation:fadeUp 0.6s ease;}
+  .welcome-orb{width:100px;height:100px;background:radial-gradient(circle at 40% 35%,#00D4FF,#0040FF,#080C10);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;box-shadow:0 0 60px rgba(0,212,255,0.25);animation:float 4s ease-in-out infinite;}
+  .welcome-title{font-size:36px;font-weight:800;letter-spacing:-1px;}
+  .welcome-sub{font-size:14px;color:var(--text-dim);max-width:400px;line-height:1.6;font-family:var(--mono);}
+  .quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;max-width:560px;}
+  .quick-btn{padding:12px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);cursor:pointer;text-align:left;transition:all 0.2s;color:var(--text);font-family:var(--font);}
+  .quick-label{font-size:12px;font-weight:600;display:block;margin-bottom:2px;}
+  .quick-sub{font-size:10px;color:var(--text-dim);font-family:var(--mono);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .msg{display:flex;gap:12px;animation:fadeUp 0.3s ease;max-width:820px;}
+  .msg.user{flex-direction:row-reverse;align-self:flex-end;}
+  .msg.assistant{align-self:flex-start;}
+  .msg-avatar{width:32px;height:32px;min-width:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;border:1px solid var(--border);background:var(--bg2);align-self:flex-end;}
+  .msg-bubble{padding:12px 16px;border-radius:14px;font-size:14px;line-height:1.65;max-width:680px;}
+  .msg.user .msg-bubble{background:linear-gradient(135deg,#0060CC,#00A8FF);color:#fff;border-radius:14px 14px 4px 14px;}
+  .msg.assistant .msg-bubble{background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:14px 14px 14px 4px;}
+  .msg-meta{font-size:10px;font-family:var(--mono);color:var(--text-faint);margin-top:4px;}
+  .msg.user .msg-meta{text-align:right;}
+  .msg-bubble h1,.msg-bubble h2,.msg-bubble h3{font-family:var(--font);font-weight:700;margin:12px 0 6px;}
+  .msg-bubble h2{font-size:15px;}.msg-bubble h3{font-size:13px;color:var(--accent);}
+  .msg-bubble p{margin-bottom:8px;}.msg-bubble ul,.msg-bubble ol{padding-left:18px;margin-bottom:8px;}.msg-bubble li{margin-bottom:4px;}
+  .msg-bubble code{font-family:var(--mono);font-size:12px;background:rgba(0,212,255,0.1);padding:1px 5px;border-radius:4px;color:var(--accent);}
+  .msg-bubble strong{font-weight:700;}
+  .typing-dots{display:flex;gap:4px;padding:4px 0;}
+  .typing-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);opacity:0.4;animation:typingBounce 1.2s infinite;}
+  .typing-dot:nth-child(2){animation-delay:0.2s;}.typing-dot:nth-child(3){animation-delay:0.4s;}
+  .input-area{padding:16px 24px 20px;border-top:1px solid var(--border);background:var(--bg);flex-shrink:0;}
+  .input-wrap{display:flex;gap:10px;align-items:flex-end;background:var(--bg2);border:1px solid var(--border-bright);border-radius:var(--r);padding:12px 16px;transition:border-color 0.2s;}
+  .input-wrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
+  .input-field{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--font);font-size:14px;resize:none;line-height:1.5;max-height:140px;overflow-y:auto;}
+  .input-field::placeholder{color:var(--text-faint);}
+  .send-btn{width:36px;height:36px;min-width:36px;background:linear-gradient(135deg,#00A8FF,#0060CC);border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;color:white;font-size:16px;}
+  .send-btn:disabled{opacity:0.4;cursor:not-allowed;}
+  .input-footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+  .input-hint{font-size:10px;font-family:var(--mono);color:var(--text-faint);}
+  .panel{width:280px;min-width:280px;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+  .panel-header{padding:16px 16px 12px;border-bottom:1px solid var(--border);font-size:13px;font-weight:700;}
+  .panel-body{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;}
+  .task-item{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:10px 12px;display:flex;gap:8px;align-items:flex-start;cursor:pointer;}
+  .task-check{width:16px;height:16px;min-width:16px;border:1.5px solid var(--border-bright);border-radius:5px;margin-top:2px;display:flex;align-items:center;justify-content:center;}
+  .task-check.checked{background:var(--accent);border-color:var(--accent);}
+  .task-text{font-size:12px;line-height:1.4;}
+  .task-item.done .task-text{text-decoration:line-through;color:var(--text-faint);}
+  .task-item.done{opacity:0.4;}
+  .task-priority{font-size:9px;font-family:var(--mono);padding:1px 5px;border-radius:4px;margin-top:3px;display:inline-block;}
+  .priority-high{background:rgba(239,68,68,0.15);color:#EF4444;}
+  .priority-mid{background:rgba(245,158,11,0.15);color:#F59E0B;}
+  .priority-low{background:rgba(16,185,129,0.15);color:#10B981;}
+  .task-add{display:flex;gap:6px;padding:8px;border-top:1px solid var(--border);}
+  .task-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-family:var(--font);font-size:12px;outline:none;}
+  .task-add-btn{background:var(--accent-dim);border:1px solid var(--accent);border-radius:8px;padding:6px 10px;color:var(--accent);cursor:pointer;font-size:12px;font-weight:600;}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;}
+  .stat-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:10px;text-align:center;}
+  .stat-num{font-size:22px;font-weight:800;color:var(--accent);font-family:var(--mono);}
+  .stat-label{font-size:9px;font-family:var(--mono);color:var(--text-faint);text-transform:uppercase;margin-top:2px;}
+  .panel-tabs{display:flex;border-bottom:1px solid var(--border);}
+  .tab{flex:1;padding:10px;text-align:center;cursor:pointer;font-size:11px;font-family:var(--mono);color:var(--text-faint);border-bottom:2px solid transparent;}
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .mood-tracker{padding:12px;display:flex;flex-direction:column;gap:8px;}
+  .mood-select{display:flex;flex-wrap:wrap;gap:6px;}
+  .mood-opt{padding:6px 10px;border-radius:20px;border:1px solid var(--border);cursor:pointer;font-size:12px;background:var(--bg3);color:var(--text-dim);}
+  .mood-entry{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:10px;display:flex;align-items:center;gap:8px;}
+  .mood-emoji{font-size:20px;}.mood-name{font-size:12px;font-weight:600;}.mood-time{font-size:10px;font-family:var(--mono);color:var(--text-faint);}
+  .mood-bar-track{height:3px;background:var(--border);border-radius:2px;margin-top:4px;}
+  .mood-bar-fill{height:100%;border-radius:2px;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+  @keyframes typingBounce{0%,60%,100%{transform:translateY(0);opacity:0.4;}30%{transform:translateY(-6px);opacity:1;}}
+  @media(max-width:900px){.panel{display:none;}}
+  @media(max-width:640px){.sidebar{width:60px;min-width:60px;}.agent-info,.logo-text,.logo-sub,.sidebar-section,.memory-card,.api-badge-text{display:none;}}
+`;
+function parseMarkdown(text){return text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\*(.+?)\*/g,"<em>$1</em>").replace(/`(.+?)`/g,"<code>$1</code>").replace(/^### (.+)$/gm,"<h3>$1</h3>").replace(/^## (.+)$/gm,"<h2>$1</h2>").replace(/^# (.+)$/gm,"<h1>$1</h1>").replace(/^\d+\. (.+)$/gm,"<li>$1</li>").replace(/^[-•] (.+)$/gm,"<li>$1</li>").replace(/(<li>.*<\/li>\n?)+/g,m=>`<ul>${m}</ul>`).replace(/\n{2,}/g,"</p><p>").replace(/\n/g,"<br>").replace(/^(?!<[hul])(.+)$/gm,"<p>$1</p>").replace(/<p><\/p>/g,"");}
+function timeStr(){return new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});}
+function maskKey(k){if(!k||k.length<12)return"sk-ant-***";return k.slice(0,10)+"···"+k.slice(-4);}
+function OnboardingScreen({onStart}){const[key,setKey]=useState("");const[err,setErr]=useState("");const[loading,setLoading]=useState(false);async function handleStart(){const trimmed=key.trim();if(!trimmed){setErr("Please enter your API key.");return;}if(!trimmed.startsWith("sk-ant-")){setErr("Key should start with sk-ant-… — check and try again.");return;}setLoading(true);setErr("");try{const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":trimmed,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:10,messages:[{role:"user",content:"hi"}]})});if(res.status===401){setErr("Invalid API key. Please double-check it.");setLoading(false);return;}onStart(trimmed);}catch(e){onStart(trimmed);}setLoading(false);}return(<div className="onboard"><div className="onboard-card"><div className="onboard-logo"><div className="onboard-orb">🦅</div><div><div className="onboard-brand">Whiteclaw</div><div className="onboard-tagline">AI Companion Platform</div></div></div><div><div className="onboard-title">Connect your AI key to begin</div></div><p className="onboard-desc">Whiteclaw uses Anthropic's Claude AI. You need a free API key — your key stays in your browser and is never stored on any server.</p><div className="onboard-steps"><div className="step"><div className="step-num">1</div><div className="step-text">Go to <a href="https://console.anthropic.com" target="_blank" rel="noreferrer">console.anthropic.com</a> and create a free account</div></div><div className="step"><div className="step-num">2</div><div className="step-text">Click <strong>API Keys</strong> in the sidebar → <strong>Create Key</strong></div></div><div className="step"><div className="step-num">3</div><div className="step-text">Copy your key (starts with <code style={{background:"rgba(0,212,255,0.1)",color:"#00D4FF",padding:"1px 4px",borderRadius:4,fontFamily:"monospace"}}>sk-ant-</code>) and paste below</div></div></div><div className="key-input-wrap"><label className="key-label">YOUR ANTHROPIC API KEY</label><input className="key-input" type="password" placeholder="sk-ant-api03-..." value={key} onChange={e=>{setKey(e.target.value);setErr("");}}/>{err&&<div className="key-err">⚠️ {err}</div>}<div className="key-note">🔒 Your key is stored only in your browser's memory — it disappears when you close the tab.</div></div><button className="start-btn" onClick={handleStart} disabled={!key.trim()||loading}>{loading?"Verifying…":"Launch Whiteclaw →"}</button></div></div>);}
+export default function WhiteclawApp(){const[apiKey,setApiKey]=useState(null);const[activeAgent,setActiveAgent]=useState("companion");const[messages,setMessages]=useState([]);const[input,setInput]=useState("");const[isLoading,setIsLoading]=useState(false);const[tasks,setTasks]=useState([{id:1,text:"Set up daily goals",done:false,priority:"high"},{id:2,text:"Explore Whiteclaw agents",done:false,priority:"mid"},{id:3,text:"Review research notes",done:false,priority:"low"}]);const[newTask,setNewTask]=useState("");const[panelTab,setPanelTab]=useState("tasks");const[moodHistory,setMoodHistory]=useState([]);const[memories,setMemories]=useState(["Working on AI companion project"]);const[msgCount,setMsgCount]=useState(0);const messagesEndRef=useRef(null);const agent=AGENTS[activeAgent];useEffect(()=>{messagesEndRef.current?.scrollIntoView({behavior:"smooth"});},[messages]);const sendMessage=useCallback(async(text=input)=>{const trimmed=text.trim();if(!trimmed||isLoading)return;const userMsg={role:"user",content:trimmed,time:timeStr(),agent:activeAgent};setMessages(prev=>[...prev,userMsg]);setInput("");setIsLoading(true);setMsgCount(c=>c+1);const history=[...messages,userMsg].slice(-20).map(m=>({role:m.role,content:m.content}));try{const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:agent.systemPrompt,messages:history})});if(!res.ok){const errData=await res.json().catch(()=>({}));throw new Error(errData?.error?.message||`API error ${res.status}`);}const data=await res.json();const reply=data.content?.find(b=>b.type==="text")?.text||"No response.";setMessages(prev=>[...prev,{role:"assistant",content:reply,time:timeStr(),agent:activeAgent,agentName:agent.name,agentIcon:agent.icon}]);if(trimmed.length>30){setMemories(prev=>{const short=trimmed.slice(0,48)+(trimmed.length>48?"…":"");const exists=prev.some(m=>m.slice(0,20)===short.slice(0,20));return exists?prev:[...prev.slice(-5),short];});}}catch(e){setMessages(prev=>[...prev,{role:"assistant",content:`⚠️ **Error:** ${e.message}`,time:timeStr(),agent:activeAgent,agentName:agent.name,agentIcon:agent.icon}]);}setIsLoading(false);},[input,messages,isLoading,activeAgent,agent,apiKey]);const handleKeyDown=e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage();}};const handleQuick=q=>{setActiveAgent(q.agent);setTimeout(()=>sendMessage(q.prompt),50);};const toggleTask=id=>setTasks(prev=>prev.map(t=>t.id===id?{...t,done:!t.done}:t));const addTask=()=>{if(!newTask.trim())return;setTasks(prev=>[...prev,{id:Date.now(),text:newTask.trim(),done:false,priority:"mid"}]);setNewTask("");};const logMood=m=>setMoodHistory(prev=>[{...m,time:timeStr()},...prev.slice(0,5)]);if(!apiKey)return(<><style>{css}</style><OnboardingScreen onStart={k=>setApiKey(k)}/></>);return(<><style>{css}</style><div className="app"><aside className="sidebar"><div className="logo"><div className="logo-icon">🦅</div><div><div className="logo-text">Whiteclaw</div><div className="logo-sub">AI Companion</div></div></div><div className="sidebar-section">Agents</div>{Object.values(AGENTS).map(ag=>(<button key={ag.id} className={`agent-btn ${activeAgent===ag.id?"active":""}`} onClick={()=>setActiveAgent(ag.id)}><span className="agent-icon">{ag.icon}</span><span className="agent-info"><span className="agent-name">{ag.name}</span><span className="agent-role">{ag.role}</span></span><span className="agent-dot" style={{background:ag.color}}/></button>))}<div className="memory-card" style={{marginTop:12}}><div className="memory-title">🧠 Memory</div>{memories.slice(0,4).map((m,i)=>(<div key={i} className="memory-item"><span style={{color:"var(--accent)",fontSize:8}}>●</span><span>{m}</span></div>))}</div><div className="api-badge"><div className="api-badge-dot"/><div><div className="api-badge-text">API Key Active</div><div className="api-badge-key">{maskKey(apiKey)}</div><button className="change-key" onClick={()=>{setApiKey(null);setMessages([]);}}>Change key</button></div></div></aside><main className="main"><div className="header"><div className="header-agent"><div className="header-icon" style={{background:`${agent.color}18`}}>{agent.icon}</div><div><div className="header-name">{agent.name}</div><div className="header-role">{agent.role}</div></div></div><div className="header-right"><div className="status-text"><span className="status-dot"/>Online</div>{messages.length>0&&<button className="clear-btn" onClick={()=>setMessages([])}>Clear chat</button>}</div></div><div className="messages">{messages.length===0?(<div className="welcome"><div className="welcome-orb">🦅</div><div><div className="welcome-title">Hello, I'm {agent.name}</div><div className="welcome-sub">Your {agent.role.toLowerCase()} — ready to help. What's on your mind?</div></div><div className="quick-grid">{QUICK_PROMPTS.map((q,i)=>(<button key={i} className="quick-btn" onClick={()=>handleQuick(q)}><span className="quick-label">{q.label}</span><span className="quick-sub">{q.prompt}</span></button>))}</div></div>):messages.map((msg,i)=>(<div key={i} className={`msg ${msg.role}`}><div className="msg-avatar" style={msg.role==="assistant"?{background:`${AGENTS[msg.agent]?.color||"#00D4FF"}18`}:{}}>{msg.role==="assistant"?(msg.agentIcon||"🦅"):"👤"}</div><div><div className="msg-bubble" dangerouslySetInnerHTML={msg.role==="assistant"?{__html:parseMarkdown(msg.content)}:undefined}>{msg.role==="user"?msg.content:undefined}</div><div className="msg-meta">{msg.role==="assistant"?msg.agentName:"You"} · {msg.time}</div></div></div>))}{isLoading&&(<div className="msg assistant"><div className="msg-avatar" style={{background:`${agent.color}18`}}>{agent.icon}</div><div><div className="msg-bubble"><div className="typing-dots"><div className="typing-dot"/><div className="typing-dot"/><div className="typing-dot"/></div></div><div className="msg-meta">{agent.name} is thinking…</div></div></div>)}<div ref={messagesEndRef}/></div><div className="input-area"><div className="input-wrap"><textarea className="input-field" placeholder={`Message ${agent.name}…`} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={handleKeyDown} rows={1} onInput={e=>{e.target.style.height="auto";e.target.style.height=Math.min(e.target.scrollHeight,140)+"px";}}/><button className="send-btn" onClick={()=>sendMessage()} disabled={isLoading||!input.trim()}>↑</button></div><div className="input-footer"><span className="input-hint">Enter to send · Switch agents anytime</span><span style={{fontSize:10,fontFamily:"monospace",color:"var(--text-faint)"}}>{input.length}</span></div></div></main><aside className="panel"><div className="stat-grid"><div className="stat-card"><div className="stat-num">{msgCount}</div><div className="stat-label">Messages</div></div><div className="stat-card"><div className="stat-num">{tasks.filter(t=>t.done).length}/{tasks.length}</div><div className="stat-label">Tasks</div></div><div className="stat-card"><div className="stat-num">{memories.length}</div><div className="stat-label">Memories</div></div><div className="stat-card"><div className="stat-num">5</div><div className="stat-label">Agents</div></div></div><div className="panel-tabs">{["tasks","mood"].map(t=>(<div key={t} className={`tab ${panelTab===t?"active":""}`} onClick={()=>setPanelTab(t)}>{t==="tasks"?"⚙️ Tasks":"💙 Mood"}</div>))}</div>{panelTab==="tasks"?(<><div className="panel-header">Task Board</div><div className="panel-body">{tasks.map(task=>(<div key={task.id} className={`task-item ${task.done?"done":""}`} onClick={()=>toggleTask(task.id)}><div className={`task-check ${task.done?"checked":""}`}>{task.done&&<span style={{color:"var(--bg)",fontSize:10}}>✓</span>}</div><div style={{flex:1}}><div className="task-text">{task.text}</div><span className={`task-priority priority-${task.priority==="high"?"high":task.priority==="mid"?"mid":"low"}`}>{task.priority}</span></div></div>))}</div><div className="task-add"><input className="task-input" placeholder="Add task…" value={newTask} onChange={e=>setNewTask(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addTask()}/><button className="task-add-btn" onClick={addTask}>+</button></div></>):(<><div className="panel-header">Mood Tracker</div><div className="mood-tracker"><div style={{fontSize:11,fontFamily:"var(--mono)",color:"var(--text-faint)",marginBottom:4}}>How are you feeling?</div><div className="mood-select">{MOODS.map(m=><div key={m.name} className="mood-opt" onClick={()=>logMood(m)}>{m.emoji} {m.name}</div>)}</div>{moodHistory.length>0&&<><div style={{fontSize:10,fontFamily:"var(--mono)",color:"var(--text-faint)",marginTop:8}}>RECENT</div>{moodHistory.map((m,i)=>(<div key={i} className="mood-entry"><div className="mood-emoji">{m.emoji}</div><div style={{flex:1}}><div className="mood-name">{m.name}</div><div className="mood-time">{m.time}</div><div className="mood-bar-track"><div className="mood-bar-fill" style={{width:`${m.val}%`,background:m.color}}/></div></div></div>))}</>}</div></>)}</aside></div></>);}</div>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">③</div>
+    <p>Scroll bawah → tap <strong>"Commit changes"</strong></p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-icon">🎉</div>
+    <div class="tip-text">Repository kamu sekarang punya <strong>5 file lengkap</strong>. Siap untuk deploy ke Vercel!</div>
+  </div>
+
+  <div class="file-list">
+    <div class="file-item"><div class="file-icon">📄</div><div class="file-name">package.json</div><div class="file-size">✅</div></div>
+    <div class="file-item"><div class="file-icon">📄</div><div class="file-name">next.config.js</div><div class="file-size">✅</div></div>
+    <div class="file-item"><div class="file-icon">📁</div><div class="file-name">src/app/layout.js</div><div class="file-size">✅</div></div>
+    <div class="file-item"><div class="file-icon">📁</div><div class="file-name">src/app/page.js</div><div class="file-size">✅</div></div>
+    <div class="file-item"><div class="file-icon">📁</div><div class="file-name">src/app/WhiteclawApp.js</div><div class="file-size">✅</div></div>
+  </div>
+</div>
+
+<!-- ══ STEP 6 ══ -->
+<div class="step-card" id="s6">
+  <div class="step-header">
+    <div class="step-num">6</div>
+    <div><div class="step-title">Deploy ke Vercel</div><div class="step-sub">Dapat URL publik — gratis selamanya</div></div>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">①</div>
+    <p>Buka tab/browser baru, ketik <strong>vercel.com</strong> → tap <strong>"Sign Up"</strong> → pilih <strong>"Continue with GitHub"</strong> dan izinkan aksesnya</p>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">②</div>
+    <p>Setelah masuk dashboard Vercel, tap tombol <strong>"Add New Project"</strong></p>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-url">🔒 vercel.com/dashboard</div>
+    <div class="mockup-screen">
+      <div class="mockup-section">YOUR PROJECTS</div>
+      <div style="background:linear-gradient(135deg,rgba(0,212,255,0.15),rgba(0,128,255,0.1));border:1px solid var(--accent);border-radius:8px;padding:12px;text-align:center;margin-top:4px;">
+        <div style="font-size:20px;margin-bottom:4px;">➕</div>
+        <div style="font-size:13px;color:var(--accent);font-weight:600;">Add New Project</div>
+        <div style="font-size:10px;color:var(--faint);margin-top:2px;">← Tap ini</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">③</div>
+    <p>Cari repository <strong>whiteclaw-companion</strong> di daftar → tap <strong>"Import"</strong></p>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-screen">
+      <div class="mockup-section">IMPORT GIT REPOSITORY</div>
+      <div class="mockup-row" style="background:rgba(0,212,255,0.05);border-radius:6px;border:1px solid rgba(0,212,255,0.2);">
+        <div class="mockup-icon">📦</div>
+        <div class="mockup-label" style="color:var(--text);">whiteclaw-companion</div>
+        <div class="mockup-action">Import →</div>
+      </div>
+      <div class="mockup-row">
+        <div class="mockup-icon">📦</div>
+        <div class="mockup-label" style="color:var(--faint);">repo-lain</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">④</div>
+    <p>Di halaman konfigurasi:<br>
+    • <strong>Framework Preset</strong> → Next.js (otomatis terdeteksi ✅)<br>
+    • Biarkan semua setting lain default<br>
+    • Tap tombol <strong>"Deploy"</strong> berwarna hitam</p>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-screen">
+      <div class="mockup-section">CONFIGURE PROJECT</div>
+      <div class="mockup-row">
+        <div class="mockup-icon">⚙️</div>
+        <div class="mockup-label">Framework Preset</div>
+        <div class="mockup-green">Next.js ✓</div>
+      </div>
+      <div class="mockup-row">
+        <div class="mockup-icon">📂</div>
+        <div class="mockup-label">Root Directory</div>
+        <div style="font-size:11px;color:var(--faint);">./</div>
+      </div>
+      <div style="margin-top:10px;background:#111;border-radius:8px;padding:12px;text-align:center;">
+        <div style="font-size:14px;color:white;font-weight:700;">Deploy</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="instr">
+    <div class="instr-num">⑤</div>
+    <p>Tunggu <strong>1–2 menit</strong>. Vercel akan build otomatis. Saat selesai, kamu mendapat URL seperti:</p>
+  </div>
+
+  <div class="done-url" style="margin:0 0 12px;">
+    https://whiteclaw-companion-abc123.vercel.app
+  </div>
+
+  <div class="tip">
+    <div class="tip-icon">🚀</div>
+    <div class="tip-text"><strong>Selesai!</strong> Bagikan URL ini ke siapa saja. Setiap pengguna akan diminta memasukkan API key Anthropic mereka sendiri — kamu tidak perlu bayar untuk usage mereka!</div>
+  </div>
+
+  <div class="warn">
+    <div class="tip-icon">💡</div>
+    <div class="warn-text">Kalau ada error saat deploy, cek tab <strong>"Build Logs"</strong> di Vercel. Paling sering karena salah nama file. Pastikan <em>WhiteclawApp.js</em> pakai huruf kapital W dan A.</div>
+  </div>
+</div>
+
+</div><!-- end .steps -->
+
+<!-- NAV -->
+<div class="nav">
+  <button class="nav-btn btn-prev" id="prevBtn" onclick="navigate(-1)" disabled>← Kembali</button>
+  <button class="nav-btn btn-next" id="nextBtn" onclick="navigate(1)">Lanjut →</button>
+</div>
+
+<script>
+const TOTAL = 6;
+let current = 1;
+
+function init() {
+  const dots = document.getElementById('dots');
+  for (let i = 1; i <= TOTAL; i++) {
+    const d = document.createElement('div');
+    d.className = 'step-dot' + (i === 1 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dots.appendChild(d);
+  }
+  render();
+}
+
+function render() {
+  // cards
+  for (let i = 1; i <= TOTAL; i++) {
+    const el = document.getElementById('s' + i);
+    if (el) el.classList.toggle('active', i === current);
+  }
+  // dots
+  document.querySelectorAll('.step-dot').forEach((d, i) => {
+    d.classList.toggle('active', i + 1 === current);
+    d.classList.toggle('done', i + 1 < current);
+  });
+  // progress
+  const pct = Math.round(((current - 1) / (TOTAL - 1)) * 100);
+  document.getElementById('prog').style.width = pct + '%';
+  document.getElementById('step-label').textContent = `Langkah ${current} dari ${TOTAL}`;
+  document.getElementById('step-pct').textContent = pct + '%';
+  // buttons
+  document.getElementById('prevBtn').disabled = current === 1;
+  const nextBtn = document.getElementById('nextBtn');
+  if (current === TOTAL) {
+    nextBtn.textContent = '✅ Selesai!';
+    nextBtn.className = 'nav-btn btn-done';
+    nextBtn.onclick = () => alert('🦅 Selamat! Whiteclaw siap digunakan semua orang. Bagikan URL Vercel kamu!');
+  } else {
+    nextBtn.textContent = 'Lanjut →';
+    nextBtn.className = 'nav-btn btn-next';
+    nextBtn.onclick = () => navigate(1);
+  }
+  // scroll top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function navigate(dir) {
+  const next = current + dir;
+  if (next >= 1 && next <= TOTAL) { current = next; render(); }
+}
+
+function goTo(n) { current = n; render(); }
+
+function copyCode(btn, id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const text = el.innerText || el.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Tersalin!';
+    btn.style.background = 'var(--green)';
+    btn.style.color = '#fff';
+    btn.style.borderColor = 'var(--green)';
+    setTimeout(() => {
+      btn.textContent = 'Salin';
+      btn.style.background = '';
+      btn.style.color = '';
+      btn.style.borderColor = '';
+    }, 2000);
+  }).catch(() => {
+    // fallback
+    const range = document.createRange();
+    range.selectNode(el);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand('copy');
+    btn.textContent = '✓ Tersalin!';
+    setTimeout(() => { btn.textContent = 'Salin'; }, 2000);
+  });
+}
+
+init();
+</script>
+</body>
+</html>
